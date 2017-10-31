@@ -59,7 +59,7 @@ def seg_sentence(sentence):
     return outstr
 
 #主要处理算法，TF-IDF、LDA
-def deal(df):
+def deal(df,ss="content_cutted"):
     stopwords = stopwordslist('data/stopwords.txt')
     #从文本中提取1000个最重要的特征关键词，然后停止
     n_features = 1000
@@ -69,7 +69,7 @@ def deal(df):
                                     stop_words=stopwords,
                                     max_df=0.5,
                                     min_df=10)
-    tf = tf_vectorizer.fit_transform(df["content_cutted"])
+    tf = tf_vectorizer.fit_transform(df[ss])
 
     #应用LDA方法，指定（或者叫瞎猜）主题个数
     n_topics = 10
@@ -77,6 +77,7 @@ def deal(df):
                                     learning_method='online',
                                     learning_offset=50.,
                                     random_state=0)
+    print("lda:",lda)
     lda.fit(tf)
     n_top_words = 20
     tf_feature_names = tf_vectorizer.get_feature_names()
@@ -94,6 +95,6 @@ def print_top_words(model, feature_names, n_top_words):
     print()
 
 
-df = pre_process()
-deal(df)
+#df = pre_process()
+#deal(df)
 #new_model=word2vec.Word2Vec.load('word2vec_model')
