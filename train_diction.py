@@ -48,6 +48,29 @@ def write_dic(file_path,dic):
     file_object.close()
     print("write finish!!!")
 
+def split_sentiment(filename='data/train.xlsx'):
+    df = pd.read_excel(filename)
+    #df.loc[:, [u'sentiment_word-情感关键词', u'sentiment_anls-情感正负面']].apply(test)
+    for i in range(len(df)):
+        ss = str(df.loc[i,'sentiment_word-情感关键词']).split(";")
+        tt = str(df.loc[i,'sentiment_anls-情感正负面']).split(";")
+        for i in range(len(ss)):
+            if ss[i] not in dic_sentiment.keys() and ""!=ss[i]:
+                dic_sentiment[ss[i]]=tt[i]
+    write_sentiment('data/sentiment_words_正负面.txt',dic_sentiment)
+
+def write_sentiment(file_path,dic):
+    file_object = open(file_path, 'w', encoding='UTF-8')
+    for w in dic:
+        file_object.write(w + " "+dic[w]+"\n")
+    file_object.close()
+    print("write finish!!!")
 # jieba.load_userdict('userdict.txt')
 #theme_tiqu()
-sentiment_word_tiqu()
+#sentiment_word_tiqu()
+
+#df = pd.read_excel('data/train.xlsx')
+#提取这两列数据
+#df['sentiment_anls-情感正负面'].apply(test)
+#df.loc[:,[u'sentiment_word-情感关键词',u'sentiment_anls-情感正负面']].apply(test)
+split_sentiment()
