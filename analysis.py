@@ -17,52 +17,56 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 import pyLDAvis
 import pyLDAvis.sklearn
-
-#把所有词作为特征
-def bag_of_words(words):
-    return dict([(word, True) for word in words])
-
-#把双词搭配（bigrams）作为特征
-def bigram(words, score_fn=BigramAssocMeasures.chi_sq, n=1000):
-    bigram_finder = BigramCollocationFinder.from_words(words)  #把文本变成双词搭配的形式
-    bigrams = bigram_finder.nbest(score_fn, n) #使用了卡方统计的方法，选择排名前1000的双词
-    return bag_of_words(bigrams)
-
-#把所有词和双词搭配一起作为特征
-def bigram_words(words, score_fn=BigramAssocMeasures.chi_sq, n=1000):
-    bigram_finder = BigramCollocationFinder.from_words(words)
-    bigrams = bigram_finder.nbest(score_fn, n)
-    return bag_of_words(words + bigrams)  #所有词和（信息量大的）双词搭配一起作为特征
+from gensim.models import word2vec
+import jieba.analyse
 
 def pre_process(filename='data/train.xlsx'):
     df = pd.read_excel(filename)
     #去掉主题是空行的，就是啥都没有的那些数据
     NONE_VIN = (df["theme-主题"].isnull()) | (df["theme-主题"].apply(lambda x: str(x).strip("NULL;").isspace()))
-    df_null = df[NONE_VIN]
     df_not_null = df[~NONE_VIN]
-    #去掉主题和情感关键词都是NULL的数据，因为这些是没用的
-    #dd = df_not_null[~(df_not_null['theme-主题'].apply(lambda x: str(x).strip("NULL;").strip()==''))]
+    #增加content_cutted那一列，这一列先对数据去掉停用词，再分词
+    df_not_null["content_cutted"] = df_not_null['content-评论内容'].apply(seg_sentence)
+
     return df_not_null
+
+
+
 def chinese_word_cut(mytext):
+    # 去掉停用词
+    #jieba.analyse.set_stop_words(stpwrdlst)
+    #a = jieba.analyse.extract_tags(mytext, topK=20, withWeight=False, allowPOS=())
+    #分词
+    #print(jieba.cut(mytext))
     return " ".join(jieba.cut(mytext))
 
-def word_cut(df):
-    nwordall = []
-    for t in df['content-评论内容']:
-        words = pseg.cut(t)
-        nword = ['']
-        for w in words:
-            if ((w.flag == 'n' or w.flag == 'v' or w.flag == 'a') and len(w.word) > 1):
-                nword.append(w.word)
-        nwordall.append(nword)
-    print(nwordall)
+# 创建停用词list
+def stopwordslist(filepath):
+    stopwords = [line.strip() for line in open(filepath, 'r', encoding='utf-8').readlines()]
+    return stopwords
+
+#对文本做停用词处理
+def seg_sentence(sentence):
+    sentence = sentence
+    sentence_seged = jieba.cut(sentence)
+    stopwords = stopwordslist('data/stopwords.txt')  # 这里加载停用词的路径
+    outstr = ''
+    for word in sentence_seged:
+        if word not in stopwords:
+            if word != '\t':
+                outstr += word
+                outstr += " "
+    return outstr
+
+#主要处理算法，TF-IDF、LDA
 def deal(df):
+    stopwords = stopwordslist('data/stopwords.txt')
     #从文本中提取1000个最重要的特征关键词，然后停止
     n_features = 1000
     #关键词提取和向量转换过程
     tf_vectorizer = CountVectorizer(strip_accents='unicode',
                                     max_features=n_features,
-                                    stop_words='english',
+                                    stop_words=stopwords,
                                     max_df=0.5,
                                     min_df=10)
     tf = tf_vectorizer.fit_transform(df["content_cutted"])
@@ -78,6 +82,9 @@ def deal(df):
     tf_feature_names = tf_vectorizer.get_feature_names()
     print_top_words(lda, tf_feature_names, n_top_words)
     #pyLDAvis.sklearn.prepare(lda, tf, tf_vectorizer)
+    #model = word2vec.Word2Vec(df["content_cutted"], min_count=5, size=50)
+    #model.save('word2vec_model')
+
 
 def print_top_words(model, feature_names, n_top_words):
     for topic_idx, topic in enumerate(model.components_):
@@ -88,6 +95,5 @@ def print_top_words(model, feature_names, n_top_words):
 
 
 df = pre_process()
-df["content_cutted"] = df['content-评论内容'].apply(chinese_word_cut)
 deal(df)
-
+#new_model=word2vec.Word2Vec.load('word2vec_model')
