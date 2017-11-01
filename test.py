@@ -30,7 +30,7 @@ def find_theme_word(theme):
                 tt=tt+ii+";"
         theme_words.append(tt)
     return theme_words
-
+#从情感字典中找到情感词所对应的情感倾向
 def find_sentiment_words(sentiment):
     exit_sentiment_words=load_sentiment_words()
     sentiment_words=[]
@@ -54,30 +54,30 @@ def find_sentiment_words(sentiment):
     # file.close()
     return sentiment_words,sentiment_anls
 
-
+def result_write(theme_words,sentiment_word,sentiment_anls):
+    file_object = open("data/output.csv", 'w', encoding='UTF-8')
+    for w in range(len(test)):
+        ss = ""
+        if test.loc[w, 'row_id'] == "":
+            ss = ss + ""
+        else:
+            ss = ss + str(test.loc[w, 'row_id']) + ","
+        if test.loc[w, 'content'] == "":
+            ss = ss + ""
+        else:
+            ss = ss + str(test.loc[w, 'content']) + ","
+        ss = ss + str(theme_words[w]) + ","
+        ss = ss + str(sentiment_word[w]) + ","
+        ss = ss + str(sentiment_anls[w])
+        # print("ss:",ss)
+        file_object.write(ss + "\n")
+    file_object.close()
+    print("write finish!!!")
 
 test = pd.read_csv('data/test.csv',header=None,names=['row_id','content'])
 #jieba.load_userdict('data/sentiment_words.txt')
 jieba.load_userdict('data/theme_words.txt')
-theme = test['content'].apply(analysis.seg_sentence)
+theme = test['content'].apply(analysis.seg_stopword_sentence)#做停用词处理
 theme_words = find_theme_word(theme)
 sentiment_word,sentiment_anls = find_sentiment_words(theme)
-
-file_object = open("data/output.csv", 'w', encoding='UTF-8')
-for w in range(len(test)):
-    ss=""
-    if test.loc[w,'row_id']=="":
-        ss = ss+""
-    else:
-        ss = ss+str(test.loc[w,'row_id'])+","
-    if test.loc[w,'content']=="":
-        ss = ss+""
-    else:
-        ss=ss+str(test.loc[w,'content'])+","
-    ss =ss+str(theme_words[w])+","
-    ss=ss+str(sentiment_word[w])+","
-    ss=ss+str(sentiment_anls[w])
-    #print("ss:",ss)
-    file_object.write(ss+"\n")
-file_object.close()
-print("write finish!!!")
+result_write(theme_words,sentiment_word,sentiment_anls)

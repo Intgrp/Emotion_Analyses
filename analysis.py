@@ -20,13 +20,14 @@ import pyLDAvis.sklearn
 from gensim.models import word2vec
 import jieba.analyse
 
+#预处理，去掉df里面的空行
 def pre_process(filename='data/train.xlsx'):
     df = pd.read_excel(filename)
     #去掉主题是空行的，就是啥都没有的那些数据
     NONE_VIN = (df["theme-主题"].isnull()) | (df["theme-主题"].apply(lambda x: str(x).strip("NULL;").isspace()))
     df_not_null = df[~NONE_VIN]
     #增加content_cutted那一列，这一列先对数据去掉停用词，再分词
-    df_not_null["content_cutted"] = df_not_null['content-评论内容'].apply(seg_sentence)
+    df_not_null["content_cutted"] = df_not_null['content-评论内容'].apply(seg_stopword_sentence)
 
     return df_not_null
 
@@ -46,7 +47,7 @@ def stopwordslist(filepath):
     return stopwords
 
 #对文本做停用词处理
-def seg_sentence(sentence):
+def seg_stopword_sentence(sentence):
     sentence = sentence
     sentence_seged = jieba.cut(sentence)
     stopwords = stopwordslist('data/stopwords.txt')  # 这里加载停用词的路径

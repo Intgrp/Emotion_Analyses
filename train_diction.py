@@ -13,18 +13,21 @@ import pandas as pd
 
 dic_theme={}
 dic_sentiment={}
+
+#将df每一行中的主题用字典存储
 def seg_sentence(sentence):
     words = str(sentence).replace("NULL;","").split(';')
     for w in words:
         if w not in dic_theme.keys() and "NULL"!=w and ""!=w:
             dic_theme[w]=1
 
+#将df每一行中的情感词用字典存储
 def split_sentence(sentence):
     words = str(sentence).split(";")
     for w in words:
         if w not in dic_sentiment.keys() and ""!=w:
             dic_sentiment[w]=1
-
+#将数据里面的主题，输出到txt里面存储
 def theme_tiqu(filename='data/train.xlsx'):
     df = pd.read_excel(filename)
     # 去掉主题是空行的，就是啥都没有的那些数据
@@ -32,12 +35,13 @@ def theme_tiqu(filename='data/train.xlsx'):
     df_not_null = df[~NONE_VIN]
     df_not_null['theme-主题'].apply(seg_sentence)
     write_dic('data/theme_words.txt',dic_theme)
-
+#将数据里面的情感词输出输出到txt中存储
 def sentiment_word_tiqu(filename='data/train.xlsx'):
     df = pd.read_excel(filename)
     df["sentiment_word-情感关键词"].apply(split_sentence)
     write_dic('data/sentiment_words.txt',dic_sentiment)
 
+#将字典打印出来，只打印字典的key，即字典以主题词或者情感词为key的名称
 def write_dic(file_path,dic):
     file_object = open(file_path, 'w',encoding='UTF-8')
     for w in dic:
@@ -47,7 +51,7 @@ def write_dic(file_path,dic):
             continue
     file_object.close()
     print("write finish!!!")
-
+#打印情感词的名称以及情感词该名称所对应的情感
 def split_sentiment(filename='data/train.xlsx'):
     df = pd.read_excel(filename)
     #df.loc[:, [u'sentiment_word-情感关键词', u'sentiment_anls-情感正负面']].apply(test)
@@ -66,8 +70,8 @@ def write_sentiment(file_path,dic):
     file_object.close()
     print("write finish!!!")
 # jieba.load_userdict('userdict.txt')
-#theme_tiqu()
-#sentiment_word_tiqu()
+theme_tiqu()
+sentiment_word_tiqu()
 
 #df = pd.read_excel('data/train.xlsx')
 #提取这两列数据
